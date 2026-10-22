@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+artifacts/
+
+TestResults/
+coverage/
+coverage-results/
+*.coverage
+*.coveragexml
+*.cobertura.xml
+*.trx
+
+.tools/
+
+nuknip-report.txt

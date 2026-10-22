@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="NuKnip.Tests/NuKnip.Tests.csproj" />
+  <Project Path="NuKnip/NuKnip.csproj" />
+</Solution>
