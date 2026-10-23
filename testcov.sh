@@ -21,14 +21,26 @@ echo "Running tests with coverage..."
 
 set +e
 
-dotnet test NuKnip.Tests/NuKnip.Tests.csproj \
-  --configuration Release \
-  --results-directory "$COVERAGE_DIR" \
-  --collect "Code Coverage;Format=cobertura" \
-  --verbosity normal \
-  >"$TMP_OUTPUT" 2>&1
+TEST_EXIT_CODE=0
 
-TEST_EXIT_CODE=$?
+for framework in net8.0 net9.0 net10.0; do
+  echo "Running tests for ${framework}..." | tee -a "$TMP_OUTPUT"
+
+  dotnet test NuKnip.Tests/NuKnip.Tests.csproj \
+    --framework "$framework" \
+    --configuration Release \
+    --results-directory "$COVERAGE_DIR" \
+    --collect "Code Coverage;Format=cobertura" \
+    --verbosity normal \
+    >>"$TMP_OUTPUT" 2>&1
+
+  FRAMEWORK_EXIT_CODE=$?
+
+  if [[ "$FRAMEWORK_EXIT_CODE" -ne 0 ]]; then
+    TEST_EXIT_CODE="$FRAMEWORK_EXIT_CODE"
+    break
+  fi
+done
 
 set -e
 
