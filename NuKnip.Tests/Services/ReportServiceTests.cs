@@ -41,7 +41,8 @@ namespace NuKnip.Tests.Services
                         []),
                 ];
 
-                sut.WriteUnusedPackageReport(@"C:\Projects\MyProject.csproj", packages);
+                string projectPath = Path.Combine("Projects", "MyProject.csproj");
+                sut.WriteUnusedPackageReport(projectPath, packages);
                 string reportPath = Path.Combine(tempDirectory.DirectoryPath, "nuknip-report.txt");
 
                 Assert.True(File.Exists(reportPath));
@@ -73,8 +74,9 @@ namespace NuKnip.Tests.Services
                 Directory.SetCurrentDirectory(tempDirectory.DirectoryPath);
                 ReportService sut = new();
 
+                string projectPath = Path.Combine("Projects", "MyProject.csproj");
                 sut.WriteUnusedPackageReport(
-                    @"C:\Projects\MyProject.csproj",
+                    projectPath,
                     []);
                 string reportPath = Path.Combine(tempDirectory.DirectoryPath, "nuknip-report.txt");
 
