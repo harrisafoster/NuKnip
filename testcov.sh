@@ -23,8 +23,6 @@ set +e
 
 dotnet test NuKnip.Tests/NuKnip.Tests.csproj \
   --configuration Release \
-  --no-build \
-  --no-restore \
   --results-directory "$COVERAGE_DIR" \
   --collect "Code Coverage;Format=cobertura" \
   --verbosity normal \
