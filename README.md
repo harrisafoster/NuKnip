@@ -1,5 +1,9 @@
 # NuKnip
 
+[![CI](https://github.com/harrisafoster/NuKnip/actions/workflows/ci.yml/badge.svg)](https://github.com/harrisafoster/NuKnip/actions/workflows/ci.yml)
+[![Coverage](https://raw.githubusercontent.com/harrisafoster/NuKnip/badges/coverage.svg)](https://github.com/harrisafoster/NuKnip/actions/workflows/ci.yml)
+[![Branch coverage](https://raw.githubusercontent.com/harrisafoster/NuKnip/badges/branch-coverage.svg)](https://github.com/harrisafoster/NuKnip/actions/workflows/ci.yml)
+
 > Find potentially unused top-level NuGet packages before they become permanent residents of your project.
 
 NuKnip is a lightweight command-line tool that analyzes a .NET project and reports which top-level NuGet packages appear to be:

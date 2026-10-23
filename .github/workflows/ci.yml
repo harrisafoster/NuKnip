@@ -1,0 +1,159 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  lint-test-coverage:
+    name: Lint, test, and coverage
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore .NET tools
+        run: dotnet tool restore
+
+      - name: Restore dependencies
+        run: dotnet restore NuKnip.slnx
+
+      - name: Verify formatting
+        run: >
+          dotnet format NuKnip.slnx
+          --verify-no-changes
+          --no-restore
+          --verbosity diagnostic
+
+      - name: Build
+        run: >
+          dotnet build NuKnip.slnx
+          --configuration Release
+          --no-restore
+
+      - name: Run tests and collect coverage
+        run: ./testcov.sh
+
+      - name: Add coverage summary
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f coverage/CoverageReport/Summary.json ]]; then
+            branch_coverage="$(
+              sed -n \
+                's/.*"branchcoverage"[[:space:]]*:[[:space:]]*\([0-9.]*\).*/\1/p' \
+                coverage/CoverageReport/Summary.json |
+              head -n1
+            )"
+
+            line_coverage="$(
+              sed -n \
+                's/.*"linecoverage"[[:space:]]*:[[:space:]]*\([0-9.]*\).*/\1/p' \
+                coverage/CoverageReport/Summary.json |
+              head -n1
+            )"
+
+            {
+              echo "## NuKnip coverage"
+              echo
+              echo "| Metric | Coverage |"
+              echo "| --- | ---: |"
+              echo "| Lines | ${line_coverage:-Unavailable}% |"
+              echo "| Branches | ${branch_coverage:-Unavailable}% |"
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Coverage summary was not generated." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NuKnip-coverage-report
+          path: coverage/CoverageReport/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Stage coverage badges
+        if: >
+          success() &&
+          github.event_name == 'push' &&
+          github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          mkdir -p badge-output
+
+          cp \
+            coverage/CoverageReport/badge_linecoverage.svg \
+            badge-output/coverage.svg
+
+          cp \
+            coverage/CoverageReport/badge_branchcoverage.svg \
+            badge-output/branch-coverage.svg
+
+      - name: Upload coverage badges
+        if: >
+          success() &&
+          github.event_name == 'push' &&
+          github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: NuKnip-coverage-badges
+          path: badge-output/
+          if-no-files-found: error
+          retention-days: 1
+
+  publish-coverage-badges:
+    name: Publish coverage badges
+    needs:
+      - lint-test-coverage
+
+    if: >
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main'
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download coverage badges
+        uses: actions/download-artifact@v5
+        with:
+          name: NuKnip-coverage-badges
+          path: badge-output
+
+      - name: Publish coverage badges
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: badges
+          publish_dir: ./badge-output
+          force_orphan: true
+          enable_jekyll: false
