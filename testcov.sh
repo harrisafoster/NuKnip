@@ -59,7 +59,7 @@ fi
 echo "Cobertura file: ${XML_FILE}"
 echo "Generating coverage report in: ${REPORT_DIR}"
 
-reportgenerator \
+dotnet reportgenerator \
   --riskHotspotsAnalysisThresholds:metricThresholdForCyclomaticComplexity=30 \
   -assemblyfilters:"+NuKnip;-xunit*;-Spectre.Console*" \
   -reports:"${XML_FILE}" \
